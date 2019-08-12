@@ -1,7 +1,7 @@
 <?php
 
-include '../../../init.php';
-include '../../../includes/functions.php';
+require '../../../init.php';
+require '../../../includes/functions.php';
 
 require_once 'functions.php';
 
@@ -21,13 +21,13 @@ $ipn = gp_ValidateIpn();
 //];
 
 // Invalid
-if($ipn['status'] === false){
+if ($ipn['status'] === false) {
     gp_LogGatewayTrans('PayPal', $ipn['data'], 'Invalid IPN');
     exit;
 }
 
 // Check that the payment status is completed
-if($ipn['data']['payment_status'] !== 'Completed') {
+if ($ipn['data']['payment_status'] !== 'Completed') {
     gp_LogGatewayTrans('PayPal', $ipn['data'], $ipn['data']['payment_status']);
     exit;
 }
@@ -59,9 +59,11 @@ if ($user !== null) {
     // Add it to the credit log
     gp_LogCredit($user->id, $gpSettings, $ipn['data']['payer_email'], $ipn['data']['mc_gross']);
 
-    run_hook('groupPay_paymentComplete', [
+    run_hook(
+        'groupPay_paymentComplete',
+        [
         'clientId'  => $user->id,
-        'paypalInfo'=> $ipn['data'],
-    ]);
-
+        'paypalInfo' => $ipn['data'],
+        ]
+    );
 }

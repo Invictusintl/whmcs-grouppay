@@ -7,18 +7,19 @@ use WHMCS\Database\Capsule;
  *
  * @return array
  */
-function gp_LoadSettings() {
-	$settings = [];
+function gp_LoadSettings()
+{
+    $settings = [];
 
     $config = Capsule::table('tbladdonmodules')
-					 ->where('module', 'group_pay')
-					 ->get();
+                     ->where('module', 'group_pay')
+                     ->get();
 
     foreach ($config as $item) {
-		$settings[$item->setting] = $item->value;
-	}
+        $settings[$item->setting] = $item->value;
+    }
 
-	return $settings;
+    return $settings;
 }
 
 /**
@@ -26,14 +27,15 @@ function gp_LoadSettings() {
  *
  * @return mixed
  */
-function gp_LoadPayPalEmail() {
-	$emails = Capsule::table('tblpaymentgateways')
-					 ->select('value')
-					 ->where('gateway', 'paypal')
-					 ->where('setting', 'email')
-					 ->first();
+function gp_LoadPayPalEmail()
+{
+    $emails = Capsule::table('tblpaymentgateways')
+                     ->select('value')
+                     ->where('gateway', 'paypal')
+                     ->where('setting', 'email')
+                     ->first();
 
-	return explode(',', $emails->value)[0];
+    return explode(',', $emails->value)[0];
 }
 
 /**
@@ -45,13 +47,13 @@ function gp_LoadPayPalEmail() {
  */
 function gp_LoadPreviousPayments($user, $name)
 {
-	$payments = Capsule::table('tblcredit')
-				  	   ->where('clientId', $user)
-				  	   ->where('description', 'like', $name . '%')
+    $payments = Capsule::table('tblcredit')
+                       ->where('clientId', $user)
+                       ->where('description', 'like', $name . '%')
                        ->orderBy('date', 'desc')
                        ->get();
 
-	$pastpmnt = [];
+    $pastpmnt = [];
 
     foreach ($payments as $id => $payment) {
         $pastpmnt[$id] = [
@@ -59,9 +61,9 @@ function gp_LoadPreviousPayments($user, $name)
             'description'   => substr($payment->description, strlen($name) + 7),
             'amount'        => formatCurrency($payment->amount),
         ];
-	}
+    }
 
-	return $pastpmnt;
+    return $pastpmnt;
 }
 
 /**
@@ -83,17 +85,18 @@ function gp_loadInvoiceTotalDue($user)
  *
  * @return array
  */
-function gp_ValidateIpn() {
-	$paypalUrl = 'https://ipnpb.paypal.com/cgi-bin/webscr';
-//	$paypalUrl = 'https://ipnpb.sandbox.paypal.com/cgi-bin/webscr';
+function gp_ValidateIpn()
+{
+    $paypalUrl = 'https://ipnpb.paypal.com/cgi-bin/webscr';
+//  $paypalUrl = 'https://ipnpb.sandbox.paypal.com/cgi-bin/webscr';
 
-	$ipnData = 'cmd=_notify-validate';
+    $ipnData = 'cmd=_notify-validate';
 
-	foreach ($_POST as $field => $value) {
-		$ipnData .= '&' . $field . '=' . rawurlencode($value);
-	}
+    foreach ($_POST as $field => $value) {
+        $ipnData .= '&' . $field . '=' . rawurlencode($value);
+    }
 
-	$ch = curl_init($paypalUrl);
+    $ch = curl_init($paypalUrl);
     curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
     curl_setopt($ch, CURLOPT_POST, 1);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -111,7 +114,7 @@ function gp_ValidateIpn() {
         curl_close($ch);
 
         return [
-		    'status'    => false,
+            'status'    => false,
             'data'      => 'cURL error: [' . curl_errno($ch) . '] ' . curl_error($ch),
         ];
     }
@@ -131,14 +134,14 @@ function gp_ValidateIpn() {
 
     curl_close($ch);
 
-	if ($result === 'VERIFIED') {
-	    return [
-		    'status'    => true,
+    if ($result === 'VERIFIED') {
+        return [
+            'status'    => true,
             'data'      => $_POST,
         ];
     }
 
-	return [
+    return [
         'status'    => false,
         'data'      => "Not Verified - {$result} - {$ipnData}",
     ];
@@ -151,13 +154,14 @@ function gp_ValidateIpn() {
  * @param $data
  * @param $result
  */
-function gp_LogGatewayTrans($gateway, $data, $result) {
-	if (is_array($data)) {
+function gp_LogGatewayTrans($gateway, $data, $result)
+{
+    if (is_array($data)) {
         $data = print_r($data, true);
     }
 
-	Capsule::table('tblgatewaylog')->insert([
-	    'date'      => Capsule::raw('NOW()'),
+    Capsule::table('tblgatewaylog')->insert([
+        'date'      => Capsule::raw('NOW()'),
         'gateway'   => $gateway,
         'data'      => $data,
         'result'    => $result,
@@ -170,9 +174,10 @@ function gp_LogGatewayTrans($gateway, $data, $result) {
  * @param String $hash Hash String
  * @return mixed
  */
-function gp_LoadUserFromHash($hash) {
-	return Capsule::table('tblclients')
-                  ->where(Capsule::raw('md5(CONCAT(id, email))'), str_replace ("-","", $hash))
+function gp_LoadUserFromHash($hash)
+{
+    return Capsule::table('tblclients')
+                  ->where(Capsule::raw('md5(CONCAT(id, email))'), str_replace("-", "", $hash))
                   ->first();
 }
 
@@ -182,14 +187,15 @@ function gp_LoadUserFromHash($hash) {
  * @param int $userId UserId to hash
  * @return string Hashed User Id
  */
-function gp_HashUserId($userId) {
+function gp_HashUserId($userId)
+{
     $email = Capsule::table('tblclients')
                     ->select('email')
                     ->where('id', $userId)
                     ->first();
 
     return !empty($email) ?
-        substr(chunk_split(md5($userId.$email->email), 5, "-"), 0, -1) : '';
+        substr(chunk_split(md5($userId . $email->email), 5, "-"), 0, -1) : '';
 }
 
 

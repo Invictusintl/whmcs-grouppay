@@ -19,12 +19,12 @@ $ca->addToBreadCrumb('grouppay.php', $settings['SystemName']);
 
 $ca->initPage();
 
-$userHash 	= $_GET['hash'];
+$userHash   = $_GET['hash'];
 $fromPaypal = $_GET['fromPaypal'] === 'true';
 
 if ($ca->isLoggedIn()) {
-	$loggedInHash = gp_HashUserId($ca->getUserID());
-	$ca->assign('loggedInHash', $loggedInHash);
+    $loggedInHash = gp_HashUserId($ca->getUserID());
+    $ca->assign('loggedInHash', $loggedInHash);
 }
 
 if (isset($userHash) && (!empty($userHash) && $userHash !== $loggedInHash)) {
@@ -36,9 +36,9 @@ if (isset($userHash) && (!empty($userHash) && $userHash !== $loggedInHash)) {
     $anotherClientHash = true;
     $clientFound       = !empty($user);
 } else {
-	$userId            = $ca->getUserId();
-	$anotherClientHash = false;
-	$clientFound       = false;
+    $userId            = $ca->getUserId();
+    $anotherClientHash = false;
+    $clientFound       = false;
 }
 
 $ca->assign('anotherClientHash', $anotherClientHash);
